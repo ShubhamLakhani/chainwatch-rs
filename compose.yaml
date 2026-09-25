@@ -1,0 +1,65 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: chainwatch
+      POSTGRES_PASSWORD: chainwatch
+      POSTGRES_DB: chainwatch
+    ports:
+      - "5432:5432"
+    volumes:
+      - chainwatch_pg:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U chainwatch -d chainwatch"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  anvil:
+    image: ghcr.io/foundry-rs/foundry:latest
+    platform: linux/amd64
+    ports:
+      - "8545:8545"
+    entrypoint: ["anvil"]
+    command:
+      - "--host"
+      - "0.0.0.0"
+      - "--port"
+      - "8545"
+      - "--chain-id"
+      - "31337"
+      - "--block-time"
+      - "1"
+    healthcheck:
+      test: ["CMD-SHELL", "cast block-number --rpc-url http://127.0.0.1:8545 >/dev/null"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  indexer:
+    build: .
+    profiles: ["full"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+      anvil:
+        condition: service_started
+    environment:
+      DATABASE_URL: postgres://chainwatch:chainwatch@postgres:5432/chainwatch
+      RPC_URL: http://anvil:8545
+      CHAIN_ID: "31337"
+      START_BLOCK: "0"
+      CONFIRMATION_DEPTH: "0"
+      POLL_INTERVAL_MS: "1000"
+      MAX_CONCURRENT_REQUESTS: "8"
+      MAX_RETRIES: "5"
+      REQUEST_TIMEOUT_SECONDS: "10"
+      BATCH_SIZE: "20"
+      API_HOST: "0.0.0.0"
+      API_PORT: "8080"
+      RUST_LOG: chainwatch_rs=info,sqlx=warn
+    ports:
+      - "8080:8080"
+
+volumes:
+  chainwatch_pg:

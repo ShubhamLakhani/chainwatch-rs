@@ -1,0 +1,55 @@
+[package]
+name = "chainwatch-rs"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.85"
+description = "Production-style EVM blockchain indexer for ERC-20 Transfer events"
+license = "MIT"
+readme = "README.md"
+documentation = "https://docs.rs/chainwatch-rs"
+keywords = ["blockchain", "ethereum", "indexer", "evm", "erc20"]
+categories = ["asynchronous", "database", "web-programming"]
+publish = false
+
+[dependencies]
+alloy-primitives = { version = "1", default-features = false, features = ["std", "serde"] }
+anyhow = "1"
+async-trait = "0.1"
+axum = { version = "0.8", default-features = false, features = ["http1", "json", "query", "tokio", "tracing"] }
+chrono = { version = "0.4", default-features = false, features = ["clock", "serde", "std"] }
+dotenvy = "0.15"
+hex = "0.4"
+reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+sqlx = { version = "0.8", default-features = false, features = [
+    "runtime-tokio-rustls",
+    "postgres",
+    "chrono",
+    "macros",
+    "migrate",
+] }
+thiserror = "2"
+tokio = { version = "1", features = ["macros", "net", "rt-multi-thread", "signal", "sync", "time"] }
+tokio-util = { version = "0.7", default-features = false, features = ["rt"] }
+tower-http = { version = "0.6", features = ["cors", "trace"] }
+tracing = { version = "0.1", default-features = false, features = ["std"] }
+tracing-subscriber = { version = "0.3", default-features = false, features = ["ansi", "env-filter", "fmt", "std"] }
+url = "2"
+
+[dev-dependencies]
+http-body-util = "0.1"
+tokio = { version = "1", features = ["macros", "rt-multi-thread", "sync", "time", "test-util"] }
+tower = { version = "0.5", default-features = false, features = ["util"] }
+
+[lints.rust]
+unsafe_code = "deny"
+
+[lints.clippy]
+dbg_macro = "deny"
+todo = "deny"
+unwrap_used = "deny"
+
+[profile.release]
+lto = "thin"
+codegen-units = 1
